@@ -1,5 +1,6 @@
 module BM = Capnp.BytesMessage
 module BS = Capnp.BytesStorage
+(* Instantiate a module for the Foo type *)
 module Foo = Foo.Make(BM)
 
 
@@ -15,10 +16,10 @@ let encode n =
   let message = Builder.Foo.to_message rw in
   Capnp.Codecs.serialize ~compression:`None message
 
-let decode_exn b =
+let decode_exn s =
   let open Foo in
   (* Get a stream of the bytes to deserialize *)
-  let stream = Capnp.Codecs.FramedStream.of_string ~compression:`None b in
+  let stream = Capnp.Codecs.FramedStream.of_string ~compression:`None s in
   (* Attempt to get the next frame from the stream in the form of a Message *)
   let res = Capnp.Codecs.FramedStream.get_next_frame stream in 
   match res with
@@ -27,5 +28,5 @@ let decode_exn b =
 
 let _ = 
   let open Foo in
-  let b = encode 3l in
-  Printf.printf "Read: %ld\n" (Reader.Foo.num_get (decode_exn b))
+  let f = encode 3l in
+  Printf.printf "Read: %ld\n" (Reader.Foo.num_get (decode_exn f))
