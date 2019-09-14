@@ -1,6 +1,5 @@
-; Plugin main as an executable target
 (executable
- (name main)
+ (name example1)
  (libraries capnp)
  ; We want to disable warnings 53 to 55 (see: http://caml.inria.fr/pub/docs/manual-ocaml/toplevel.html)
  ; We disable warning 55 as this relates to inlining certain functions. For inlining please see the README.md 
