@@ -22,14 +22,6 @@ let circle_str =
   Capnp.Codecs.serialize ~compression:`None message
 
 
-let decode_exn s = 
-  let open Shape in
-  let stream = Capnp.Codecs.FramedStream.of_string ~compression:`None s in 
-  let res = Capnp.Codecs.FramedStream.get_next_frame stream in 
-  match res with 
-  | (Result.Ok message) -> Reader.Shape.of_message message 
-  | (Result.Error _) -> failwith "Could not read string"
-
 let colour_to_string c =
   let open Shape.Reader.Shape.Colour in
   match c with
@@ -40,7 +32,12 @@ let colour_to_string c =
 
 let decode_exn shape_str = 
   let open Shape in
-  let shape = decode_exn shape_str in
+  let stream = Capnp.Codecs.FramedStream.of_string ~compression:`None shape_str in 
+  let res = Capnp.Codecs.FramedStream.get_next_frame stream in 
+  let shape = match res with 
+    | (Result.Ok message) -> Reader.Shape.of_message message 
+    | (Result.Error _) -> failwith "Could not read string"
+  in
   match (Reader.Shape.get shape) with 
   | Reader.Shape.Circle c -> 
     Printf.printf "%s circle with a radius of %f\n"
