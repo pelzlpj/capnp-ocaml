@@ -11,6 +11,6 @@
 ; PLEASE NOTE that capnpc must exist on your computer for this to work (https://capnproto.org/install.html)
 (rule 
   (targets foo.ml foo.mli)
-  (deps (:< foo.capnp))
+  (deps foo.capnp)
   (action
-    (run capnpc -o ocaml %{<})))
+    (run capnpc -o %{bin:capnpc-ocaml} %{deps})))
