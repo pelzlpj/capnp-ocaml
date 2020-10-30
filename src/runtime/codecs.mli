@@ -87,6 +87,20 @@ val serialize_fold : 'cap Message.BytesMessage.Message.t ->
 val serialize_iter : 'cap Message.BytesMessage.Message.t ->
   compression:compression_t -> f:(string -> unit) -> unit
 
+(** [serialize_fold_copyless message ~compression ~init ~f] exposes an ordered sequence
+    of string fragments (and lengths) corresponding to a Cap'n Proto framed message, encoded
+    using the specified [compression] method.  The return value is the result
+    of folding [f] across the resulting sequence of fragments. *)
+val serialize_fold_copyless : 'cap Message.BytesMessage.Message.t ->
+  compression:compression_t -> init:'acc -> f:('acc -> string -> int -> 'acc) -> 'acc
+
+(** [serialize_iter_copyless message ~compression ~f] exposes an ordered sequence of
+    string fragments (and lengths) corresponding to a Cap'n Proto framed message, encoded
+    using the specified [compression] method.  [f] is applied to each fragment
+    in turn. *)
+val serialize_iter_copyless : 'cap Message.BytesMessage.Message.t ->
+  compression:compression_t -> f:(string -> int -> unit) -> unit
+
 (** [serialize ~compression message] constructs a string containing the [message]
     segments prefixed with the serialization framing header, encoded using the
     specified [compression] method. *)

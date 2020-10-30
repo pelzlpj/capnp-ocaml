@@ -202,6 +202,44 @@ let test_random_serialize_deserialize _ctx =
     | Result.Error _ ->
         assert false)
 
+let test_random_serialize_deserialize_fold _ctx =
+  laws_exn "deserialize(fragment(serialize(x))) = x"
+      2000 (Quickcheck.Generator.both message_gen capnp_string_gen) (fun (m, trailing_data) ->
+    let open Capnp.Runtime in
+    let ser_fragments = Codecs.FramedStream.empty `None in
+    Codecs.serialize_fold m ~compression:`None ~init:() 
+        ~f:(fun () fragment -> 
+            Codecs.FramedStream.add_fragment ser_fragments fragment
+        );
+    let () = Codecs.FramedStream.add_fragment ser_fragments trailing_data in
+    match Codecs.FramedStream.get_next_frame ser_fragments with
+    | Result.Ok decoded_message ->
+        let () = assert (Codecs.FramedStream.bytes_available ser_fragments =
+          (String.length trailing_data)) in
+        (Capnp.Message.BytesMessage.Message.to_storage m) =
+          (Capnp.Message.BytesMessage.Message.to_storage decoded_message)
+    | Result.Error _ ->
+        assert false)
+
+let test_random_serialize_deserialize_fold_copyless _ctx =
+  laws_exn "deserialize(fragment(serialize(x))) = x"
+      2000 (Quickcheck.Generator.both message_gen capnp_string_gen) (fun (m, trailing_data) ->
+    let open Capnp.Runtime in
+    let ser_fragments = Codecs.FramedStream.empty `None in
+    Codecs.serialize_fold_copyless m ~compression:`None ~init:() 
+        ~f:(fun () fragment len -> 
+            let fragment = String.sub fragment 0 len in
+            Codecs.FramedStream.add_fragment ser_fragments fragment
+        );
+    let () = Codecs.FramedStream.add_fragment ser_fragments trailing_data in
+    match Codecs.FramedStream.get_next_frame ser_fragments with
+    | Result.Ok decoded_message ->
+        let () = assert (Codecs.FramedStream.bytes_available ser_fragments =
+          (String.length trailing_data)) in
+        (Capnp.Message.BytesMessage.Message.to_storage m) =
+          (Capnp.Message.BytesMessage.Message.to_storage decoded_message)
+    | Result.Error _ ->
+        assert false)
 
 let test_random_serialize_deserialize_packed _ctx =
   laws_exn "deserialize_unpack(fragment(serialize_pack(x))) = x"
@@ -221,6 +259,8 @@ let test_random_serialize_deserialize_packed _ctx =
 let random_serialize_suite =
   "random_serialization_deserialization" >::: [
     "serialize_deserialize_message" >:: test_random_serialize_deserialize;
+    "serialize_deserialize_fold_message" >:: test_random_serialize_deserialize_fold;
+    "serialize_deserialize_fold_copyless_message" >:: test_random_serialize_deserialize_fold_copyless;
     "serialize_deserialize_packed_message" >:: test_random_serialize_deserialize_packed;
   ]
 

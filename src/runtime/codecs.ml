@@ -298,6 +298,25 @@ let serialize_iter message ~compression ~f =
   serialize_fold message ~compression ~init:() ~f:(fun () s -> f s)
 
 
+let serialize_fold_copyless message ~compression ~init ~f = 
+  let segment_descrs = Message.BytesMessage.Message.to_storage message in
+  match compression with
+  | `None ->
+      let header = make_header segment_descrs in
+      ListLabels.fold_left segment_descrs ~init:(f init header (String.length header)) ~f:(fun acc descr ->
+        let open Message.BytesMessage in
+        f acc (Bytes.unsafe_to_string descr.Message.segment) descr.Message.bytes_consumed )
+  | `Packing ->
+      serialize_fold message ~compression:`None ~init
+        ~f:(fun acc unpacked_fragment ->
+            let packed_string = Packing.pack_string unpacked_fragment in
+          f acc packed_string (String.length packed_string))
+
+
+let serialize_iter_copyless message ~compression ~f =
+  serialize_fold_copyless message ~compression ~init:() ~f:(fun () s -> f s)
+
+
 let rec serialize ~compression message =
   match compression with
   | `None ->
