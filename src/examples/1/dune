@@ -1,0 +1,16 @@
+(executable
+ (name example1)
+ (libraries capnp)
+ ; We want to disable warnings 53 to 55 (see: http://caml.inria.fr/pub/docs/manual-ocaml/toplevel.html)
+ ; We disable warning 55 as this relates to inlining certain functions. For inlining please see the README.md 
+ ; and the benchmarks for examples.
+ (flags :standard -w -53-55))
+
+
+; This rule tells dune how to generate foo.ml and foo.mli by compiling foo.capnp against the CAP'N PROTO compiler
+; PLEASE NOTE that capnpc must exist on your computer for this to work (https://capnproto.org/install.html)
+(rule 
+  (targets foo.ml foo.mli)
+  (deps foo.capnp)
+  (action
+    (run capnpc -o %{bin:capnpc-ocaml} %{deps})))
